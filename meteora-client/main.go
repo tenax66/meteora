@@ -1,16 +1,22 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 
 	"github.com/gorilla/websocket"
 )
 
+var addr = flag.String("addr", "localhost:8080", "http service address")
+
 func main() {
-	serverAddr := "ws://localhost:8080/ws"
-	conn, _, err := websocket.DefaultDialer.Dial(serverAddr, nil)
+	flag.Parse()
+
+	serverAddr := url.URL{Scheme: "ws", Host: *addr, Path: "/ws"}
+	conn, _, err := websocket.DefaultDialer.Dial(serverAddr.String(), nil)
 	if err != nil {
 		log.Fatal("Error connecting to server:", err)
 		os.Exit(1)
