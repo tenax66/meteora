@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+
 	"github.com/gorilla/websocket"
 )
 
 func main() {
-	serverAddr := "ws://localhost:8080/ws" // サーバのアドレスに合わせて変更
+	serverAddr := "ws://localhost:8080/ws"
 	conn, _, err := websocket.DefaultDialer.Dial(serverAddr, nil)
 	if err != nil {
 		log.Fatal("Error connecting to server:", err)
@@ -26,7 +27,7 @@ func main() {
 
 	fmt.Println("Message sent to server:", message)
 
-	// サーバからのレスポンスを待つ
+	// wait for a server response
 	_, response, err := conn.ReadMessage()
 	if err != nil {
 		log.Println("Error reading response:", err)
