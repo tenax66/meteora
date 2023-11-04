@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -10,7 +11,20 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+type Message struct {
+	Text string `json:"text"`
+}
+
 var addr = flag.String("addr", "localhost:8080", "http service address")
+
+func parseResponse(response []byte) Message {
+	var message Message
+	if err := json.Unmarshal(response, &message); err != nil {
+		log.Println("Error unmarshalling message", err)
+	}
+
+	return message
+}
 
 func main() {
 	flag.Parse()
@@ -23,9 +37,18 @@ func main() {
 	}
 	defer conn.Close()
 
-	message := "Hello, WebSocket Server!"
+	message := Message{
+		Text: "Hello, WebSocket Server!",
+	}
 
-	err = conn.WriteMessage(websocket.TextMessage, []byte(message))
+	// encoding to json
+	jsonData, err := json.Marshal(message)
+	if err != nil {
+		log.Println("Error encoding JSON:", err)
+		return
+	}
+
+	err = conn.WriteMessage(websocket.TextMessage, jsonData)
 	if err != nil {
 		log.Println("Error sending message:", err)
 		return
@@ -40,5 +63,6 @@ func main() {
 		return
 	}
 
-	fmt.Println("Response from server:", string(response))
+	fmt.Println(parseResponse(response).Text)
+
 }
