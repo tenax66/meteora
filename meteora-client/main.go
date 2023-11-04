@@ -17,13 +17,13 @@ type Message struct {
 
 var addr = flag.String("addr", "localhost:8080", "http service address")
 
-func parseResponse(response []byte) Message {
-	var message Message
-	if err := json.Unmarshal(response, &message); err != nil {
+func parseResponse(response []byte) []Message {
+	var messages []Message
+	if err := json.Unmarshal(response, &messages); err != nil {
 		log.Println("Error unmarshalling message", err)
 	}
 
-	return message
+	return messages
 }
 
 func main() {
@@ -63,6 +63,6 @@ func main() {
 		return
 	}
 
-	fmt.Println(parseResponse(response).Text)
+	fmt.Println(parseResponse(response))
 
 }

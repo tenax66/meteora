@@ -1,15 +1,19 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
-	"strings"
 	"sync"
 
 	"github.com/gorilla/websocket"
 )
 
-var messages []string
+type Message struct {
+	Text string `json:"text"`
+}
+
+var messages []Message
 var mu sync.Mutex
 
 var upgrader = websocket.Upgrader{
@@ -38,8 +42,10 @@ func handleWebSocketConnection(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// store the received message
-		message := string(p)
+		// store the received json message
+		var message Message
+
+		json.Unmarshal(p, &message)
 		log.Println("Received message:", message)
 
 		mu.Lock()
@@ -48,7 +54,12 @@ func handleWebSocketConnection(w http.ResponseWriter, r *http.Request) {
 
 		// return messages stored on this server
 		mu.Lock()
-		if err := conn.WriteMessage(websocket.TextMessage, []byte(strings.Join(messages, ","))); err != nil {
+		jsonData, err := json.Marshal(messages)
+		if err != nil {
+			log.Println("Error while marshaling messages:", err)
+		}
+
+		if err := conn.WriteMessage(websocket.TextMessage, jsonData); err != nil {
 			log.Println("Error while writing message:", err)
 			mu.Unlock()
 			return
