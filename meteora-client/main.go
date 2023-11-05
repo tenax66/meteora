@@ -54,7 +54,7 @@ func main() {
 		return
 	}
 
-	fmt.Println("Message sent to server:", message)
+	log.Println("Message sent to server:", message)
 
 	// wait for a server response
 	_, response, err := conn.ReadMessage()
