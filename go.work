@@ -1,6 +1,7 @@
-go 1.21
+go 1.21.3
 
 use (
-	./meteora-client
-	./meteora-server
+	./client
+	./server
+	./shared
 )

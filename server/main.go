@@ -7,19 +7,10 @@ import (
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/tenax66/meteora/shared"
 )
 
-type Message struct {
-	Id      string  `json:"id"`
-	Content Content `json:"content"`
-}
-
-type Content struct {
-	Created_at int64  `json:"timestamp"`
-	Text       string `json:"text"`
-}
-
-var messages []Message
+var messages []shared.Message
 var mu sync.Mutex
 
 var upgrader = websocket.Upgrader{
@@ -49,7 +40,7 @@ func handleWebSocketConnection(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// store the received json message
-		var message Message
+		var message shared.Message
 
 		json.Unmarshal(p, &message)
 		log.Println("Received message:", message)

@@ -12,22 +12,13 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/tenax66/meteora/shared"
 )
-
-type Message struct {
-	Id      string  `json:"id"`
-	Content Content `json:"content"`
-}
-
-type Content struct {
-	Created_at int64  `json:"timestamp"`
-	Text       string `json:"text"`
-}
 
 var addr = flag.String("addr", "localhost:8080", "http service address")
 
-func parseResponse(response []byte) []Message {
-	var messages []Message
+func parseResponse(response []byte) []shared.Message {
+	var messages []shared.Message
 	if err := json.Unmarshal(response, &messages); err != nil {
 		log.Println("Error unmarshalling message", err)
 	}
@@ -35,8 +26,8 @@ func parseResponse(response []byte) []Message {
 	return messages
 }
 
-func createMessage(text string) *Message {
-	content := Content{
+func createMessage(text string) *shared.Message {
+	content := shared.Content{
 		Created_at: time.Now().Unix(),
 		Text:       text,
 	}
@@ -54,7 +45,7 @@ func createMessage(text string) *Message {
 	hashInBytes := hash.Sum(nil)
 	id := hex.EncodeToString(hashInBytes)
 
-	message := Message{
+	message := shared.Message{
 		Id:      id,
 		Content: content,
 	}

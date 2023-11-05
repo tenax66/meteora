@@ -1,4 +1,4 @@
-module github.com/tenax66/meteora-server
+module github.com/tenax66/meteora/client
 
 go 1.21
 
