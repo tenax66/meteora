@@ -9,13 +9,19 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
 
 type Message struct {
-	Id   string `json:"id"`
-	Text string `json:"text"`
+	Id      string  `json:"id"`
+	Content Content `json:"content"`
+}
+
+type Content struct {
+	Created_at int64  `json:"timestamp"`
+	Text       string `json:"text"`
 }
 
 var addr = flag.String("addr", "localhost:8080", "http service address")
@@ -29,6 +35,33 @@ func parseResponse(response []byte) []Message {
 	return messages
 }
 
+func createMessage(text string) *Message {
+	content := Content{
+		Created_at: time.Now().Unix(),
+		Text:       text,
+	}
+
+	// create a message id by SHA-256 of contents
+	hash := sha256.New()
+
+	s, err := json.Marshal(content)
+	if err != nil {
+		log.Println("Error marshalling content", err)
+	}
+
+	log.Println("Serialized content:", string(s))
+	hash.Write(s)
+	hashInBytes := hash.Sum(nil)
+	id := hex.EncodeToString(hashInBytes)
+
+	message := Message{
+		Id:      id,
+		Content: content,
+	}
+
+	return &message
+}
+
 func main() {
 	flag.Parse()
 
@@ -40,18 +73,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	text := "Hello, WebSocket Server!"
-
-	// create a message id by SHA-256 of contents
-	hash := sha256.New()
-	hash.Write([]byte(text))
-	hashInBytes := hash.Sum(nil)
-	id := hex.EncodeToString(hashInBytes)
-
-	message := Message{
-		Id:   id,
-		Text: text,
-	}
+	message := createMessage("Hello, WebSocket Server!")
 
 	// encoding to json
 	jsonData, err := json.Marshal(message)
