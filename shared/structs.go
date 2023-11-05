@@ -1,5 +1,6 @@
 package shared
 
+// the only struct for a meteora message
 type Message struct {
 	Id      string  `json:"id"`
 	Content Content `json:"content"`
