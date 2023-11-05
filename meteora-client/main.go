@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -12,6 +14,7 @@ import (
 )
 
 type Message struct {
+	Id   string `json:"id"`
 	Text string `json:"text"`
 }
 
@@ -37,8 +40,17 @@ func main() {
 	}
 	defer conn.Close()
 
+	text := "Hello, WebSocket Server!"
+
+	// create a message id by SHA-512 of contents
+	hash := sha256.New()
+	hash.Write([]byte(text))
+	hashInBytes := hash.Sum(nil)
+	id := hex.EncodeToString(hashInBytes)
+
 	message := Message{
-		Text: "Hello, WebSocket Server!",
+		Id:   id,
+		Text: text,
 	}
 
 	// encoding to json
