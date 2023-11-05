@@ -42,7 +42,7 @@ func main() {
 
 	text := "Hello, WebSocket Server!"
 
-	// create a message id by SHA-512 of contents
+	// create a message id by SHA-256 of contents
 	hash := sha256.New()
 	hash.Write([]byte(text))
 	hashInBytes := hash.Sum(nil)
