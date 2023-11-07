@@ -4,6 +4,8 @@ package shared
 type Message struct {
 	Id      string  `json:"id"`
 	Content Content `json:"content"`
+	// Pubkey
+	// Sig
 }
 
 type Content struct {
