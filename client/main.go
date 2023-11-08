@@ -1,11 +1,11 @@
 package main
 
 import (
+	"crypto/ed25519"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"net/url"
 	"os"
@@ -15,7 +15,9 @@ import (
 	"github.com/tenax66/meteora/shared"
 )
 
-var addr = flag.String("addr", "localhost:8080", "http service address")
+var addr = flag.String("addr", "localhost:8080", "The http service address")
+var key = flag.String("key", "", "The path of the private key")
+var pubkey = flag.String("pubkey", "", "The path of the public key")
 
 func parseResponse(response []byte) []shared.Message {
 	var messages []shared.Message
@@ -26,28 +28,30 @@ func parseResponse(response []byte) []shared.Message {
 	return messages
 }
 
-func createMessage(text string) *shared.Message {
+// create a message from the given text. Generate and append a message ID and a signature.
+func createMessage(text string, key ed25519.PrivateKey, pubkey ed25519.PublicKey) *shared.Message {
 	content := shared.Content{
 		Created_at: time.Now().Unix(),
 		Text:       text,
 	}
 
-	// create a message id by SHA-256 of contents
-	hash := sha256.New()
-
-	s, err := json.Marshal(content)
+	ser, err := json.Marshal(content)
 	if err != nil {
 		log.Println("Error marshalling content", err)
 	}
+	log.Println("Serialized content:", string(ser))
 
-	log.Println("Serialized content:", string(s))
-	hash.Write(s)
+	// create a message id by SHA-256 of contents
+	hash := sha256.New()
+	hash.Write(ser)
 	hashInBytes := hash.Sum(nil)
 	id := hex.EncodeToString(hashInBytes)
 
 	message := shared.Message{
 		Id:      id,
 		Content: content,
+		Pubkey:  pubkey,
+		Sig:     ed25519.Sign(key, ser),
 	}
 
 	return &message
@@ -64,7 +68,12 @@ func main() {
 	}
 	defer conn.Close()
 
-	message := createMessage("Hello, WebSocket Server!")
+	k, p, err := shared.ReadKeys(*key, *pubkey)
+	if err != nil {
+		log.Println("Error reading keys:", err)
+		return
+	}
+	message := createMessage("Hello, WebSocket Server!", k, p)
 
 	// encoding to json
 	jsonData, err := json.Marshal(message)
@@ -73,8 +82,7 @@ func main() {
 		return
 	}
 
-	err = conn.WriteMessage(websocket.TextMessage, jsonData)
-	if err != nil {
+	if err := conn.WriteMessage(websocket.TextMessage, jsonData); err != nil {
 		log.Println("Error sending message:", err)
 		return
 	}
@@ -88,6 +96,10 @@ func main() {
 		return
 	}
 
-	fmt.Println(parseResponse(response))
+	messages := parseResponse(response)
+
+	for i, m := range messages {
+		log.Println("Message", i, ": ", m.Content.Text)
+	}
 
 }

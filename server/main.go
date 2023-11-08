@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/ed25519"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -44,6 +45,19 @@ func handleWebSocketConnection(w http.ResponseWriter, r *http.Request) {
 
 		json.Unmarshal(p, &message)
 		log.Println("Received message:", message)
+
+		// verify the attached signature
+		ser, err := json.Marshal(message.Content)
+		if err != nil {
+			log.Println("Error while marshaling the content:", err)
+			return
+		}
+		if ed25519.Verify(message.Pubkey, ser, message.Sig) {
+			log.Println("Signature verified")
+		} else {
+			log.Println("Signature verification failed")
+			return
+		}
 
 		mu.Lock()
 		messages = append(messages, message)
