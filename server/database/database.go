@@ -5,6 +5,7 @@ import (
 	"log"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/tenax66/meteora/shared"
 )
 
 const DB = "sqlite3"
@@ -31,4 +32,15 @@ func createDB(dbPath string) (*sql.DB, error) {
 	}
 
 	return db, nil
+}
+
+// Insert the given message into the database.
+func insertMessage(db *sql.DB, message shared.Message) error {
+	insertQuery := "INSERT INTO messages (id, created_at, text, pubkey, sig) VALUES (?, ?, ?, ?, ?)"
+	_, err := db.Exec(insertQuery, message.Id, message.Content.Created_at, message.Content.Text, message.Pubkey, message.Sig)
+	if err != nil {
+		log.Println("Error while inserting", err)
+		return err
+	}
+	return nil
 }
