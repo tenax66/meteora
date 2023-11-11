@@ -13,7 +13,7 @@ func ReadKeys(key_path string, pubkey_path string) (ed25519.PrivateKey, ed25519.
 	// read a secret key
 	privateKeyPEM, err := os.ReadFile(key_path)
 	if err != nil {
-		log.Println("Error reading private key:", err)
+		log.Println("Error while reading private key:", err)
 		return nil, nil, err
 	}
 
@@ -26,14 +26,14 @@ func ReadKeys(key_path string, pubkey_path string) (ed25519.PrivateKey, ed25519.
 	// PEM blocks of type "PRIVATE KEY"
 	privateKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 	if err != nil {
-		log.Println("Error parsing private key:", err)
+		log.Println("Error while parsing private key:", err)
 		return nil, nil, err
 	}
 
 	// read a public key
 	publicKeyPEM, err := os.ReadFile(pubkey_path)
 	if err != nil {
-		log.Println("Error reading public key:", err)
+		log.Println("Error while reading public key:", err)
 		return nil, nil, err
 	}
 
@@ -46,7 +46,7 @@ func ReadKeys(key_path string, pubkey_path string) (ed25519.PrivateKey, ed25519.
 	// PEM blocks of type "PUBLIC KEY"
 	publicKey, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {
-		log.Println("Error parsing public key:", err)
+		log.Println("Error while parsing public key:", err)
 		return nil, nil, err
 	}
 

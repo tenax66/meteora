@@ -22,7 +22,7 @@ var pubkey = flag.String("pubkey", "", "The path of the public key")
 func parseResponse(response []byte) []shared.Message {
 	var messages []shared.Message
 	if err := json.Unmarshal(response, &messages); err != nil {
-		log.Println("Error unmarshalling message", err)
+		log.Println("Error while unmarshalling message", err)
 	}
 
 	return messages
@@ -37,7 +37,7 @@ func createMessage(text string, key ed25519.PrivateKey, pubkey ed25519.PublicKey
 
 	ser, err := json.Marshal(content)
 	if err != nil {
-		log.Println("Error marshalling content", err)
+		log.Println("Error while marshalling content", err)
 	}
 	log.Println("Serialized content:", string(ser))
 
@@ -63,14 +63,14 @@ func main() {
 	serverAddr := url.URL{Scheme: "ws", Host: *addr, Path: "/ws"}
 	conn, _, err := websocket.DefaultDialer.Dial(serverAddr.String(), nil)
 	if err != nil {
-		log.Fatal("Error connecting to server:", err)
+		log.Fatal("Error while connecting to server:", err)
 		os.Exit(1)
 	}
 	defer conn.Close()
 
 	k, p, err := shared.ReadKeys(*key, *pubkey)
 	if err != nil {
-		log.Println("Error reading keys:", err)
+		log.Println("Error while reading keys:", err)
 		return
 	}
 	message := createMessage("Hello, WebSocket Server!", k, p)
@@ -78,12 +78,12 @@ func main() {
 	// encoding to json
 	jsonData, err := json.Marshal(message)
 	if err != nil {
-		log.Println("Error encoding JSON:", err)
+		log.Println("Error while encoding JSON:", err)
 		return
 	}
 
 	if err := conn.WriteMessage(websocket.TextMessage, jsonData); err != nil {
-		log.Println("Error sending message:", err)
+		log.Println("Error while sending message:", err)
 		return
 	}
 
@@ -92,7 +92,7 @@ func main() {
 	// wait for a server response
 	_, response, err := conn.ReadMessage()
 	if err != nil {
-		log.Println("Error reading response:", err)
+		log.Println("Error while reading response:", err)
 		return
 	}
 

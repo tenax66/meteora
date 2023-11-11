@@ -100,6 +100,6 @@ func main() {
 	log.Println("WebSocket server started on port", port)
 	err := http.ListenAndServe(port, nil)
 	if err != nil {
-		log.Fatal("Error starting server:", err)
+		log.Fatal("Error while starting server:", err)
 	}
 }
