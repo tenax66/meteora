@@ -2,7 +2,7 @@ package main
 
 import (
 	"crypto/ed25519"
-	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -54,13 +54,13 @@ func handleWebSocketConnection(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		pubkey, err := base64.StdEncoding.DecodeString(message.Pubkey)
+		pubkey, err := hex.DecodeString(message.Pubkey)
 		if err != nil {
 			log.Println("Cannot decode a public key")
 			return
 		}
 
-		sig, err := base64.StdEncoding.DecodeString(message.Sig)
+		sig, err := hex.DecodeString(message.Sig)
 		if err != nil {
 			log.Println("Cannot decode a signature")
 			return

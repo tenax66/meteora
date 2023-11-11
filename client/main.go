@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/ed25519"
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"flag"
@@ -51,8 +50,8 @@ func createMessage(text string, key ed25519.PrivateKey, pubkey ed25519.PublicKey
 	message := shared.Message{
 		Id:      id,
 		Content: content,
-		Pubkey:  base64.StdEncoding.EncodeToString(pubkey),
-		Sig:     base64.StdEncoding.EncodeToString(ed25519.Sign(key, ser)),
+		Pubkey:  hex.EncodeToString(pubkey),
+		Sig:     hex.EncodeToString(ed25519.Sign(key, ser)),
 	}
 
 	return &message
@@ -88,7 +87,7 @@ func main() {
 		return
 	}
 
-	log.Println("Message sent to server:", jsonData)
+	log.Println("Message sent to server:", message)
 
 	// wait for a server response
 	_, response, err := conn.ReadMessage()
