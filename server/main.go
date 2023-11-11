@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/ed25519"
+	"encoding/base64"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -52,7 +53,20 @@ func handleWebSocketConnection(w http.ResponseWriter, r *http.Request) {
 			log.Println("Error while marshaling the content:", err)
 			return
 		}
-		if ed25519.Verify(message.Pubkey, ser, message.Sig) {
+
+		pubkey, err := base64.StdEncoding.DecodeString(message.Pubkey)
+		if err != nil {
+			log.Println("Cannot decode a public key")
+			return
+		}
+
+		sig, err := base64.StdEncoding.DecodeString(message.Sig)
+		if err != nil {
+			log.Println("Cannot decode a signature")
+			return
+		}
+
+		if ed25519.Verify(pubkey, ser, sig) {
 			log.Println("Signature verified")
 		} else {
 			log.Println("Signature verification failed")

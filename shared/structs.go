@@ -1,13 +1,11 @@
 package shared
 
-import "crypto/ed25519"
-
 // the only struct for a meteora message
 type Message struct {
-	Id      string            `json:"id"`
-	Content Content           `json:"content"`
-	Pubkey  ed25519.PublicKey `json:"pubkey"`
-	Sig     []byte            `json:"sig"`
+	Id      string  `json:"id"`
+	Content Content `json:"content"`
+	Pubkey  string  `json:"pubkey"`
+	Sig     string  `json:"sig"`
 }
 
 type Content struct {
