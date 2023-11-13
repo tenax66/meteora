@@ -11,7 +11,7 @@ import (
 const DB = "sqlite3"
 
 // Create database if it does not exist
-func createDB(dbPath string) (*sql.DB, error) {
+func CreateDB(dbPath string) (*sql.DB, error) {
 	db, err := sql.Open(DB, dbPath)
 	if err != nil {
 		log.Println("Error while opening a database", err)
@@ -35,12 +35,58 @@ func createDB(dbPath string) (*sql.DB, error) {
 }
 
 // Insert the given message into the database.
-func insertMessage(db *sql.DB, message shared.Message) error {
+func InsertMessage(db *sql.DB, message shared.Message) error {
 	insertQuery := "INSERT INTO messages (id, created_at, text, pubkey, sig) VALUES (?, ?, ?, ?, ?)"
+
 	_, err := db.Exec(insertQuery, message.Id, message.Content.Created_at, message.Content.Text, message.Pubkey, message.Sig)
+
 	if err != nil {
 		log.Println("Error while inserting", err)
 		return err
 	}
+
 	return nil
+}
+
+func SelectMessageById(id string, db *sql.DB) (shared.Message, error) {
+	query := "SELECT id, created_at, text, pubkey, sig FROM messages WHERE id = ?"
+
+	row := db.QueryRow(query, id)
+
+	var message shared.Message
+	err := row.Scan(&message.Id, &message.Content.Created_at, &message.Content.Text, &message.Pubkey, &message.Sig)
+	if err != nil {
+		log.Println("Error while scanning a row", err)
+	}
+
+	return message, nil
+}
+
+func SelectAllMessages(db *sql.DB) ([]shared.Message, error) {
+	query := "SELECT id, created_at, text, pubkey, sig FROM messages"
+	rows, err := db.Query(query)
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	// scan all messages
+	var messages []shared.Message
+	for rows.Next() {
+		var message shared.Message
+		err := rows.Scan(&message.Id, &message.Content.Created_at, &message.Content.Text, &message.Pubkey, &message.Sig)
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+		messages = append(messages, message)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return messages, nil
 }

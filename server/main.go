@@ -2,18 +2,18 @@ package main
 
 import (
 	"crypto/ed25519"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"log"
 	"net/http"
-	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/tenax66/meteora/meteora-server/database"
 	"github.com/tenax66/meteora/shared"
 )
 
-var messages []shared.Message
-var mu sync.Mutex
+var db *sql.DB
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
@@ -73,12 +73,14 @@ func handleWebSocketConnection(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		mu.Lock()
-		messages = append(messages, message)
-		mu.Unlock()
+		database.InsertMessage(db, message)
 
 		// return messages stored on this server
-		mu.Lock()
+		messages, err := database.SelectAllMessages(db)
+		if err != nil {
+			log.Println("Error while selecting all messages", err)
+			return
+		}
 		jsonData, err := json.Marshal(messages)
 		if err != nil {
 			log.Println("Error while marshaling messages:", err)
@@ -86,14 +88,14 @@ func handleWebSocketConnection(w http.ResponseWriter, r *http.Request) {
 
 		if err := conn.WriteMessage(websocket.TextMessage, jsonData); err != nil {
 			log.Println("Error while writing message:", err)
-			mu.Unlock()
 			return
 		}
-		mu.Unlock()
 	}
 }
 
 func main() {
+	db, _ = database.CreateDB("./meteora.db")
+
 	http.HandleFunc("/ws", handleWebSocketConnection)
 
 	port := ":8080"
