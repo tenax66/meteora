@@ -15,6 +15,7 @@ import (
 	"github.com/tenax66/meteora/shared"
 )
 
+var m = flag.String("m", "", "The message to send")
 var addr = flag.String("addr", "localhost:8080", "The http service address")
 var key = flag.String("key", "", "The path of the private key")
 var pubkey = flag.String("pubkey", "", "The path of the public key")
@@ -73,7 +74,7 @@ func main() {
 		log.Println("Error while reading keys:", err)
 		return
 	}
-	message := createMessage("Hello, WebSocket Server!", k, p)
+	message := createMessage(*m, k, p)
 
 	// encoding to json
 	jsonData, err := json.Marshal(message)
