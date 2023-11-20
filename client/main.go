@@ -5,20 +5,19 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"flag"
 	"log"
 	"net/url"
-	"os"
 	"time"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/widget"
 
 	"github.com/gorilla/websocket"
 	"github.com/tenax66/meteora/shared"
 )
-
-var m = flag.String("m", "", "The message to send")
-var addr = flag.String("addr", "localhost:8080", "The http service address")
-var key = flag.String("key", "", "The path of the private key")
-var pubkey = flag.String("pubkey", "", "The path of the public key")
 
 func parseResponse(response []byte) []shared.Message {
 	var messages []shared.Message
@@ -59,48 +58,77 @@ func createMessage(text string, key ed25519.PrivateKey, pubkey ed25519.PublicKey
 }
 
 func main() {
-	flag.Parse()
+	meteoraApp := app.New()
+	myWindow := meteoraApp.NewWindow("WebSocket Client")
+	myWindow.Resize(fyne.NewSize(800, 600))
 
-	serverAddr := url.URL{Scheme: "ws", Host: *addr, Path: "/ws"}
-	conn, _, err := websocket.DefaultDialer.Dial(serverAddr.String(), nil)
-	if err != nil {
-		log.Fatal("Error while connecting to server:", err)
-		os.Exit(1)
-	}
-	defer conn.Close()
+	// entries
+	addressEntry := widget.NewEntry()
+	addressEntry.SetPlaceHolder("Enter Host Address")
+	privateKeyEntry := widget.NewEntry()
+	privateKeyEntry.SetPlaceHolder("Enter Private Key Path")
+	publicKeyEntry := widget.NewEntry()
+	publicKeyEntry.SetPlaceHolder("Enter Public Key Path")
+	messageEntry := widget.NewEntry()
+	messageEntry.SetPlaceHolder("Type your message here...")
 
-	k, p, err := shared.ReadKeys(*key, *pubkey)
-	if err != nil {
-		log.Println("Error while reading keys:", err)
-		return
-	}
-	message := createMessage(*m, k, p)
+	sendButton := widget.NewButton("Send", func() {
+		addr := addressEntry.Text
+		privateKeyPath := privateKeyEntry.Text
+		publicKeyPath := publicKeyEntry.Text
+		messageText := messageEntry.Text
 
-	// encoding to json
-	jsonData, err := json.Marshal(message)
-	if err != nil {
-		log.Println("Error while encoding JSON:", err)
-		return
-	}
+		k, p, err := shared.ReadKeys(privateKeyPath, publicKeyPath)
+		if err != nil {
+			dialog.ShowError(err, myWindow)
+			return
+		}
 
-	if err := conn.WriteMessage(websocket.TextMessage, jsonData); err != nil {
-		log.Println("Error while sending message:", err)
-		return
-	}
+		message := createMessage(messageText, k, p)
+		jsonData, err := json.Marshal(message)
+		if err != nil {
+			dialog.ShowError(err, myWindow)
+			return
+		}
 
-	log.Println("Message sent to server:", message)
+		serverAddr := url.URL{Scheme: "ws", Host: addr, Path: "/ws"}
+		conn, _, err := websocket.DefaultDialer.Dial(serverAddr.String(), nil)
+		if err != nil {
+			dialog.ShowError(err, myWindow)
+			return
+		}
+		defer conn.Close()
 
-	// wait for a server response
-	_, response, err := conn.ReadMessage()
-	if err != nil {
-		log.Println("Error while reading response:", err)
-		return
-	}
+		if err := conn.WriteMessage(websocket.TextMessage, jsonData); err != nil {
+			dialog.ShowError(err, myWindow)
+			return
+		}
 
-	messages := parseResponse(response)
+		log.Println("Message sent to server:", message)
 
-	for i, m := range messages {
-		log.Println("Message", i, ": ", m.Content.Text)
-	}
+		// Wait for a server response
+		_, response, err := conn.ReadMessage()
+		if err != nil {
+			dialog.ShowError(err, myWindow)
+			return
+		}
+
+		messages := parseResponse(response)
+
+		for i, m := range messages {
+			log.Println("Message", i, ": ", m.Content.Text)
+		}
+	})
+
+	content := container.NewVBox(
+		addressEntry,
+		privateKeyEntry,
+		publicKeyEntry,
+		messageEntry,
+		sendButton,
+	)
+
+	myWindow.SetContent(content)
+	myWindow.ShowAndRun()
 
 }
