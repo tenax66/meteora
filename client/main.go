@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/url"
 	"time"
@@ -72,6 +73,34 @@ func main() {
 	messageEntry := widget.NewEntry()
 	messageEntry.SetPlaceHolder("Type your message here...")
 
+	var messages []shared.Message
+
+	messageList := widget.NewList(
+		func() int {
+			// Return the number of messages
+			return len(messages)
+		},
+		func() fyne.CanvasObject {
+			// Return a template for each item in the list
+			return container.NewVBox(
+				widget.NewLabel("Timestamp:"),
+				widget.NewLabel("Content:"),
+				// Add more labels or widgets as needed
+			)
+		},
+		func(i widget.ListItemID, item fyne.CanvasObject) {
+			// Populate the template with data for each item in the list
+			timestampLabel := item.(*fyne.Container).Objects[0].(*widget.Label)
+			contentLabel := item.(*fyne.Container).Objects[1].(*widget.Label)
+
+			// Use messages[i] to populate the labels with actual data
+			timestampLabel.SetText(fmt.Sprintf("Timestamp: %v", messages[i].Content.Created_at))
+			contentLabel.SetText(fmt.Sprintf("Content: %v", messages[i].Content.Text))
+			// Update other labels or widgets as needed
+		})
+
+	messageList.Resize(fyne.NewSize(700, 400))
+
 	sendButton := widget.NewButton("Send", func() {
 		addr := addressEntry.Text
 		privateKeyPath := privateKeyEntry.Text
@@ -113,20 +142,21 @@ func main() {
 			return
 		}
 
-		messages := parseResponse(response)
+		messages = parseResponse(response)
 
-		for i, m := range messages {
-			log.Println("Message", i, ": ", m.Content.Text)
-		}
+		messageList.Refresh()
+
 	})
 
-	content := container.NewVBox(
+	top := container.NewVBox(
 		addressEntry,
 		privateKeyEntry,
 		publicKeyEntry,
 		messageEntry,
 		sendButton,
 	)
+
+	content := container.NewBorder(top, nil, nil, nil, messageList)
 
 	myWindow.SetContent(content)
 	myWindow.ShowAndRun()
