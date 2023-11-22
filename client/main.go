@@ -74,6 +74,7 @@ func main() {
 	messageEntry.SetPlaceHolder("Type your message here...")
 
 	// get values from preferences
+	// TODO: create a new function to load preferences
 	if addr := meteoraApp.Preferences().String("address"); addr != "" {
         addressEntry.SetText(addr)
     }
@@ -119,6 +120,7 @@ func main() {
 		messageText := messageEntry.Text
 
 		// save preferences
+		// TODO: create a new function to save preferences
 		meteoraApp.Preferences().SetString("address", addressEntry.Text)
 		meteoraApp.Preferences().SetString("privateKey", privateKeyEntry.Text)
 		meteoraApp.Preferences().SetString("publicKey", publicKeyEntry.Text)
