@@ -59,7 +59,7 @@ func createMessage(text string, key ed25519.PrivateKey, pubkey ed25519.PublicKey
 }
 
 func main() {
-	meteoraApp := app.New()
+	meteoraApp := app.NewWithID("meteora")
 	myWindow := meteoraApp.NewWindow("WebSocket Client")
 	myWindow.Resize(fyne.NewSize(800, 600))
 
@@ -72,6 +72,17 @@ func main() {
 	publicKeyEntry.SetPlaceHolder("Enter Public Key Path")
 	messageEntry := widget.NewEntry()
 	messageEntry.SetPlaceHolder("Type your message here...")
+
+	// get values from preferences
+	if addr := meteoraApp.Preferences().String("address"); addr != "" {
+        addressEntry.SetText(addr)
+    }
+    if privateKeyPath := meteoraApp.Preferences().String("privateKey"); privateKeyPath != "" {
+        privateKeyEntry.SetText(privateKeyPath)
+    }
+    if publicKeyPath := meteoraApp.Preferences().String("publicKey"); publicKeyPath != "" {
+        publicKeyEntry.SetText(publicKeyPath)
+    }
 
 	var messages []shared.Message
 
@@ -106,6 +117,11 @@ func main() {
 		privateKeyPath := privateKeyEntry.Text
 		publicKeyPath := publicKeyEntry.Text
 		messageText := messageEntry.Text
+
+		// save preferences
+		meteoraApp.Preferences().SetString("address", addressEntry.Text)
+		meteoraApp.Preferences().SetString("privateKey", privateKeyEntry.Text)
+		meteoraApp.Preferences().SetString("publicKey", publicKeyEntry.Text)
 
 		k, p, err := shared.ReadKeys(privateKeyPath, publicKeyPath)
 		if err != nil {
