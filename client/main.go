@@ -74,16 +74,12 @@ func main() {
 	messageEntry.SetPlaceHolder("Type your message here...")
 
 	// get values from preferences
-	// TODO: create a new function to load preferences
-	if addr := meteoraApp.Preferences().String("address"); addr != "" {
-        addressEntry.SetText(addr)
-    }
-    if privateKeyPath := meteoraApp.Preferences().String("privateKey"); privateKeyPath != "" {
-        privateKeyEntry.SetText(privateKeyPath)
-    }
-    if publicKeyPath := meteoraApp.Preferences().String("publicKey"); publicKeyPath != "" {
-        publicKeyEntry.SetText(publicKeyPath)
-    }
+
+	loadPreferences(meteoraApp, []PreferencesPair{
+		{Entry: addressEntry, Key: "address"},
+		{Entry: privateKeyEntry, Key: "privateKey"},
+		{Entry: publicKeyEntry, Key: "publicKey"},
+	})
 
 	var messages []shared.Message
 
@@ -121,9 +117,11 @@ func main() {
 
 		// save preferences
 		// TODO: create a new function to save preferences
-		meteoraApp.Preferences().SetString("address", addressEntry.Text)
-		meteoraApp.Preferences().SetString("privateKey", privateKeyEntry.Text)
-		meteoraApp.Preferences().SetString("publicKey", publicKeyEntry.Text)
+		savePreferences(meteoraApp, []PreferencesPair{
+			{Entry: addressEntry, Key: "address"},
+			{Entry: privateKeyEntry, Key: "privateKey"},
+			{Entry: publicKeyEntry, Key: "publicKey"},
+		})
 
 		k, p, err := shared.ReadKeys(privateKeyPath, publicKeyPath)
 		if err != nil {
