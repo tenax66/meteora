@@ -20,6 +20,8 @@ import (
 	"github.com/tenax66/meteora/shared"
 )
 
+var MESSAGES []shared.Message
+
 func parseResponse(response []byte) []shared.Message {
 	var messages []shared.Message
 	if err := json.Unmarshal(response, &messages); err != nil {
@@ -81,12 +83,10 @@ func main() {
 		{Entry: publicKeyEntry, Key: "publicKey"},
 	})
 
-	var messages []shared.Message
-
 	messageList := widget.NewList(
 		func() int {
 			// Return the number of messages
-			return len(messages)
+			return len(MESSAGES)
 		},
 		func() fyne.CanvasObject {
 			// Return a template for each item in the list
@@ -102,8 +102,8 @@ func main() {
 			contentLabel := item.(*fyne.Container).Objects[1].(*widget.Label)
 
 			// Use messages[i] to populate the labels with actual data
-			timestampLabel.SetText(fmt.Sprintf("Timestamp: %v", messages[i].Content.Created_at))
-			contentLabel.SetText(fmt.Sprintf("Content: %v", messages[i].Content.Text))
+			timestampLabel.SetText(fmt.Sprintf("Timestamp: %v", MESSAGES[i].Content.Created_at))
+			contentLabel.SetText(fmt.Sprintf("Content: %v", MESSAGES[i].Content.Text))
 			// Update other labels or widgets as needed
 		})
 
@@ -157,7 +157,7 @@ func main() {
 			return
 		}
 
-		messages = parseResponse(response)
+		MESSAGES = parseResponse(response)
 
 		messageList.Refresh()
 
@@ -180,7 +180,7 @@ func main() {
 			return
 		}
 
-		messages = parseResponse(response)
+		MESSAGES = parseResponse(response)
 
 		messageList.Refresh()
 	})
