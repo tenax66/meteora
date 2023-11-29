@@ -163,12 +163,19 @@ func main() {
 
 	})
 
+	reloadButton := widget.NewButton("Reload", func() {
+		// mock
+		log.Println("Reload button clicked")
+	})
+
+	buttonBox := container.NewHBox(sendButton, reloadButton)
+
 	top := container.NewVBox(
 		addressEntry,
 		privateKeyEntry,
 		publicKeyEntry,
 		messageEntry,
-		sendButton,
+		buttonBox,
 	)
 
 	content := container.NewBorder(top, nil, nil, nil, messageList)
