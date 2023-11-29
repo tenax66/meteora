@@ -53,7 +53,7 @@ func handleSend(w http.ResponseWriter, r *http.Request) {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Println("Error while reading message:", err)
 			}
-			return
+			break
 		}
 
 		// store the received json message
@@ -66,26 +66,26 @@ func handleSend(w http.ResponseWriter, r *http.Request) {
 		ser, err := json.Marshal(message.Content)
 		if err != nil {
 			log.Println("Error while marshaling the content:", err)
-			return
+			break
 		}
 
 		pubkey, err := hex.DecodeString(message.Pubkey)
 		if err != nil {
 			log.Println("Cannot decode a public key")
-			return
+			break
 		}
 
 		sig, err := hex.DecodeString(message.Sig)
 		if err != nil {
 			log.Println("Cannot decode a signature")
-			return
+			break
 		}
 
 		if ed25519.Verify(pubkey, ser, sig) {
 			log.Println("Signature verified")
 		} else {
 			log.Println("Signature verification failed")
-			return
+			break
 		}
 
 		database.InsertMessage(db, message)
@@ -94,12 +94,12 @@ func handleSend(w http.ResponseWriter, r *http.Request) {
 		jsonData, err := retrieveAllMessages(db)
 		if err != nil {
 			log.Println("Error while retrieving messages from database:", err)
-			return
+			break
 		}
 
 		if err := conn.WriteMessage(websocket.TextMessage, jsonData); err != nil {
 			log.Println("Error while writing message:", err)
-			return
+			break
 		}
 	}
 }
