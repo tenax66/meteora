@@ -116,7 +116,6 @@ func main() {
 		messageText := messageEntry.Text
 
 		// save preferences
-		// TODO: create a new function to save preferences
 		savePreferences(meteoraApp, []PreferencesPair{
 			{Entry: addressEntry, Key: "address"},
 			{Entry: privateKeyEntry, Key: "privateKey"},
