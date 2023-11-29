@@ -135,7 +135,7 @@ func main() {
 			return
 		}
 
-		serverAddr := url.URL{Scheme: "ws", Host: addr, Path: "/ws"}
+		serverAddr := url.URL{Scheme: "ws", Host: addr, Path: "/ws/send"}
 		conn, _, err := websocket.DefaultDialer.Dial(serverAddr.String(), nil)
 		if err != nil {
 			dialog.ShowError(err, myWindow)
@@ -164,8 +164,25 @@ func main() {
 	})
 
 	reloadButton := widget.NewButton("Reload", func() {
-		// mock
-		log.Println("Reload button clicked")
+		addr := addressEntry.Text
+		serverAddr := url.URL{Scheme: "ws", Host: addr, Path: "/ws/fetch"}
+		conn, _, err := websocket.DefaultDialer.Dial(serverAddr.String(), nil)
+		if err != nil {
+			dialog.ShowError(err, myWindow)
+			return
+		}
+		defer conn.Close()
+
+		// Wait for a server response
+		_, response, err := conn.ReadMessage()
+		if err != nil {
+			dialog.ShowError(err, myWindow)
+			return
+		}
+
+		messages = parseResponse(response)
+
+		messageList.Refresh()
 	})
 
 	buttonBox := container.NewHBox(sendButton, reloadButton)

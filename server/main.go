@@ -21,7 +21,22 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func handleWebSocketConnection(w http.ResponseWriter, r *http.Request) {
+func retrieveAllMessages(db *sql.DB) ([]byte, error) {
+	messages, err := database.SelectAllMessages(db)
+	if err != nil {
+		log.Println("Error while selecting all messages", err)
+		return nil, err
+	}
+	jsonData, err := json.Marshal(messages)
+	if err != nil {
+		log.Println("Error while marshaling messages:", err)
+		return nil, err
+	}
+
+	return jsonData, nil
+}
+
+func handleSend(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("Error while upgrading connection:", err)
@@ -76,14 +91,10 @@ func handleWebSocketConnection(w http.ResponseWriter, r *http.Request) {
 		database.InsertMessage(db, message)
 
 		// return messages stored on this server
-		messages, err := database.SelectAllMessages(db)
+		jsonData, err := retrieveAllMessages(db)
 		if err != nil {
-			log.Println("Error while selecting all messages", err)
+			log.Println("Error while retrieving messages from database:", err)
 			return
-		}
-		jsonData, err := json.Marshal(messages)
-		if err != nil {
-			log.Println("Error while marshaling messages:", err)
 		}
 
 		if err := conn.WriteMessage(websocket.TextMessage, jsonData); err != nil {
@@ -93,10 +104,31 @@ func handleWebSocketConnection(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleFetch(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println("Error while upgrading connection:", err)
+		return
+	}
+	defer conn.Close()
+
+	log.Println("Client connected")
+	jsonData, err := retrieveAllMessages(db)
+	if err != nil {
+		log.Println("Error while retrieving messages from database:", err)
+		return
+	}
+	if err := conn.WriteMessage(websocket.TextMessage, jsonData); err != nil {
+		log.Println("Error while writing message:", err)
+		return
+	}
+}
+
 func main() {
 	db, _ = database.CreateDB("./meteora.db")
 
-	http.HandleFunc("/ws", handleWebSocketConnection)
+	http.HandleFunc("/ws/send", handleSend)
+	http.HandleFunc("/ws/fetch", handleFetch)
 
 	port := ":8080"
 	log.Println("WebSocket server started on port", port)
