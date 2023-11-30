@@ -62,6 +62,37 @@ func SelectMessageById(id string, db *sql.DB) (shared.Message, error) {
 	return message, nil
 }
 
+func SelectMessagesWithLimit(db *sql.DB, limit int) ([]shared.Message, error) {
+	query := "SELECT id, created_at, text, pubkey, sig FROM messages LIMIT ?"
+	rows, err := db.Query(query, limit)
+
+	if err != nil {
+		log.Println("Error while selecting", err)
+		return nil, err
+	}
+
+	// scan messages
+	var messages []shared.Message
+	for rows.Next() {
+		var message shared.Message
+		err := rows.Scan(&message.Id, &message.Content.Created_at, &message.Content.Text, &message.Pubkey, &message.Sig)
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+		messages = append(messages, message)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return messages, nil
+}
+
+// Deprecated: use SelectMessagesWithLimit instead.
 func SelectAllMessages(db *sql.DB) ([]shared.Message, error) {
 	query := "SELECT id, created_at, text, pubkey, sig FROM messages"
 	rows, err := db.Query(query)

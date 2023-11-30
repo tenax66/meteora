@@ -21,8 +21,9 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func retrieveAllMessages(db *sql.DB) ([]byte, error) {
-	messages, err := database.SelectAllMessages(db)
+func retrieveMessages(db *sql.DB) ([]byte, error) {
+	// TODO: configurable limit
+	messages, err := database.SelectMessagesWithLimit(db, 10)
 	if err != nil {
 		log.Println("Error while selecting all messages", err)
 		return nil, err
@@ -91,7 +92,7 @@ func handleSend(w http.ResponseWriter, r *http.Request) {
 		database.InsertMessage(db, message)
 
 		// return messages stored on this server
-		jsonData, err := retrieveAllMessages(db)
+		jsonData, err := retrieveMessages(db)
 		if err != nil {
 			log.Println("Error while retrieving messages from database:", err)
 			break
@@ -113,7 +114,7 @@ func handleFetch(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	log.Println("Client connected")
-	jsonData, err := retrieveAllMessages(db)
+	jsonData, err := retrieveMessages(db)
 	if err != nil {
 		log.Println("Error while retrieving messages from database:", err)
 		return
