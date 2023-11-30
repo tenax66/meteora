@@ -25,7 +25,7 @@ func retrieveMessages(db *sql.DB) ([]byte, error) {
 	// TODO: configurable limit
 	messages, err := database.SelectMessagesWithLimit(db, 10)
 	if err != nil {
-		log.Println("Error while selecting all messages", err)
+		log.Println("Error while selecting messages", err)
 		return nil, err
 	}
 	jsonData, err := json.Marshal(messages)
