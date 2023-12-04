@@ -104,7 +104,7 @@ func main() {
 			contentLabel := item.(*fyne.Container).Objects[2].(*widget.Label)
 
 			// Use messages[i] to populate the labels with actual data
-			timestampLabel.SetText(fmt.Sprintf("Timestamp: %v", MESSAGES[i].Content.Created_at))
+			timestampLabel.SetText(fmt.Sprintf("Timestamp: %v", time.Unix(MESSAGES[i].Content.Created_at, 0)))
 			pubkeyLabel.SetText(fmt.Sprintf("Pubkey: %v", MESSAGES[i].Pubkey))
 			contentLabel.SetText(fmt.Sprintf("Content: %v", MESSAGES[i].Content.Text))
 			// Update other labels or widgets as needed
