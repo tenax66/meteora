@@ -92,6 +92,7 @@ func main() {
 			// Return a template for each item in the list
 			return container.NewVBox(
 				widget.NewLabel("Timestamp:"),
+				widget.NewLabel("Pubkey:"),
 				widget.NewLabel("Content:"),
 				// Add more labels or widgets as needed
 			)
@@ -99,10 +100,12 @@ func main() {
 		func(i widget.ListItemID, item fyne.CanvasObject) {
 			// Populate the template with data for each item in the list
 			timestampLabel := item.(*fyne.Container).Objects[0].(*widget.Label)
-			contentLabel := item.(*fyne.Container).Objects[1].(*widget.Label)
+			pubkeyLabel := item.(*fyne.Container).Objects[1].(*widget.Label)
+			contentLabel := item.(*fyne.Container).Objects[2].(*widget.Label)
 
 			// Use messages[i] to populate the labels with actual data
 			timestampLabel.SetText(fmt.Sprintf("Timestamp: %v", MESSAGES[i].Content.Created_at))
+			pubkeyLabel.SetText(fmt.Sprintf("Pubkey: %v", MESSAGES[i].Pubkey))
 			contentLabel.SetText(fmt.Sprintf("Content: %v", MESSAGES[i].Content.Text))
 			// Update other labels or widgets as needed
 		})
