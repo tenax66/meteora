@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
-	"github.com/tenax66/meteora/meteora-server/database"
 	"github.com/tenax66/meteora/shared"
 )
 
@@ -23,7 +22,7 @@ var upgrader = websocket.Upgrader{
 
 func retrieveMessages(db *sql.DB) ([]byte, error) {
 	// TODO: configurable limit
-	messages, err := database.SelectMessagesWithLimit(db, 10)
+	messages, err := SelectMessagesWithLimit(db, 10)
 	if err != nil {
 		log.Println("Error while selecting messages", err)
 		return nil, err
@@ -89,7 +88,7 @@ func handleSend(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		database.InsertMessage(db, message)
+		InsertMessage(db, message)
 
 		// return messages stored on this server
 		jsonData, err := retrieveMessages(db)
@@ -126,7 +125,7 @@ func handleFetch(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	db, _ = database.CreateDB("./meteora.db")
+	db, _ = CreateDB("./meteora.db")
 
 	http.HandleFunc("/ws/send", handleSend)
 	http.HandleFunc("/ws/fetch", handleFetch)
