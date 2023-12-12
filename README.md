@@ -2,6 +2,12 @@
 
 Yet another social network
 
+## generate keys
+```bash
+$ openssl genpkey -algorithm ED25519 -out key.pem
+$ openssl pkey -in key.pem -pubout -out pubkey.pem
+```
+
 ## run
 ### client
 ```bash
@@ -20,12 +26,6 @@ go run .
 cd server
 docker build --tag meteora-server:latest .
 docker compose up
-```
-
-## generate keys
-```bash
-$ openssl genpkey -algorithm ED25519 -out key.pem
-$ openssl pkey -in key.pem -pubout -out pubkey.pem
 ```
 
 ## messages
