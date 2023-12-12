@@ -20,15 +20,17 @@ import (
 	"github.com/tenax66/meteora/shared"
 )
 
-var MESSAGES []shared.Message
+var messages []shared.Message
+var currentPage = 1
+const messagesPerPage = 10
 
 func parseResponse(response []byte) []shared.Message {
-	var messages []shared.Message
-	if err := json.Unmarshal(response, &messages); err != nil {
+	var m []shared.Message
+	if err := json.Unmarshal(response, &m); err != nil {
 		log.Println("Error while unmarshalling message", err)
 	}
 
-	return messages
+	return m
 }
 
 // create a message from the given text. Generate and append a message ID and a signature.
@@ -60,6 +62,14 @@ func createMessage(text string, key ed25519.PrivateKey, pubkey ed25519.PublicKey
 	return &message
 }
 
+
+
+// messageList の update 関数を変更
+func updateMessageList() {
+
+}
+
+
 func main() {
 	meteoraApp := app.NewWithID("meteora")
 	myWindow := meteoraApp.NewWindow("WebSocket Client")
@@ -86,7 +96,7 @@ func main() {
 	messageList := widget.NewList(
 		func() int {
 			// Return the number of messages
-			return len(MESSAGES)
+			return len(messages)
 		},
 		func() fyne.CanvasObject {
 			// Return a template for each item in the list
@@ -104,9 +114,9 @@ func main() {
 			contentLabel := item.(*fyne.Container).Objects[2].(*widget.Label)
 
 			// Use messages[i] to populate the labels with actual data
-			timestampLabel.SetText(fmt.Sprintf("Timestamp: %v", time.Unix(MESSAGES[i].Content.Created_at, 0)))
-			pubkeyLabel.SetText(fmt.Sprintf("Pubkey: %v", MESSAGES[i].Pubkey))
-			contentLabel.SetText(fmt.Sprintf("Content: %v", MESSAGES[i].Content.Text))
+			timestampLabel.SetText(fmt.Sprintf("Timestamp: %v", time.Unix(messages[i].Content.Created_at, 0)))
+			pubkeyLabel.SetText(fmt.Sprintf("Pubkey: %v", messages[i].Pubkey))
+			contentLabel.SetText(fmt.Sprintf("Content: %v", messages[i].Content.Text))
 			// Update other labels or widgets as needed
 		})
 
@@ -160,7 +170,7 @@ func main() {
 			return
 		}
 
-		MESSAGES = parseResponse(response)
+		messages = parseResponse(response)
 
 		messageList.Refresh()
 
@@ -183,12 +193,27 @@ func main() {
 			return
 		}
 
-		MESSAGES = parseResponse(response)
+		messages = parseResponse(response)
 
 		messageList.Refresh()
 	})
 
-	buttonBox := container.NewHBox(sendButton, reloadButton)
+	// ページング用のナビゲーションボタンを追加
+	prevButton := widget.NewButton("Prev Page", func() {
+		if currentPage > 0 {
+			currentPage--
+			updateMessageList()
+		}
+	})
+
+	nextButton := widget.NewButton("Next Page", func() {
+		if (currentPage+1)*messagesPerPage < len(messages) {
+			currentPage++
+			updateMessageList()
+		}
+	})
+
+	buttonBox := container.NewHBox(sendButton, reloadButton, prevButton, nextButton)
 
 	top := container.NewVBox(
 		addressEntry,
