@@ -62,9 +62,9 @@ func SelectMessageById(id string, db *sql.DB) (shared.Message, error) {
 	return message, nil
 }
 
-func SelectMessagesWithLimit(db *sql.DB, limit int) ([]shared.Message, error) {
-	query := "SELECT id, created_at, text, pubkey, sig FROM messages ORDER BY created_at DESC LIMIT ?"
-	rows, err := db.Query(query, limit)
+func SelectMessages(db *sql.DB, limit int, offset int) ([]shared.Message, error) {
+	query := "SELECT id, created_at, text, pubkey, sig FROM messages ORDER BY created_at DESC LIMIT ? OFFSET ?"
+	rows, err := db.Query(query, limit, offset)
 
 	if err != nil {
 		log.Println("Error while selecting", err)

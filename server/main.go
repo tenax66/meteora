@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"net/url"
+	"strconv"
 
 	"github.com/gorilla/websocket"
 	"github.com/tenax66/meteora/shared"
@@ -20,9 +22,9 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func retrieveMessages(db *sql.DB) ([]byte, error) {
+func retrieveMessages(db *sql.DB, limit int, offset int) ([]byte, error) {
 	// TODO: configurable limit
-	messages, err := SelectMessagesWithLimit(db, 10)
+	messages, err := SelectMessages(db, limit, offset)
 	if err != nil {
 		log.Println("Error while selecting messages", err)
 		return nil, err
@@ -91,7 +93,7 @@ func handleSend(w http.ResponseWriter, r *http.Request) {
 		InsertMessage(db, message)
 
 		// return messages stored on this server
-		jsonData, err := retrieveMessages(db)
+		jsonData, err := retrieveMessages(db, 10, 0)
 		if err != nil {
 			log.Println("Error while retrieving messages from database:", err)
 			break
@@ -112,8 +114,32 @@ func handleFetch(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
+	// parse query strings
+	// FIXME: redundant unescaping her
+	unescapedUrl, _ := url.QueryUnescape(r.URL.String())
+	parsedUrl, _ := url.Parse(unescapedUrl)
+
+	log.Println("query:", parsedUrl.Query())
+	limitParam := parsedUrl.Query().Get("limit")
+	log.Println("limit:", limitParam)
+	offsetParam := parsedUrl.Query().Get("offset")
+	log.Println("offset:", offsetParam)
+
+	// set default values if parameters are invalid
+	limit, err := strconv.Atoi(limitParam)
+	if err != nil || limit <= 0 {
+		log.Println("Error while parsing `limit` parameter:", err)
+		limit = 10
+	}
+
+	offset, err := strconv.Atoi(offsetParam)
+	if err != nil || offset < 0 {
+		log.Println("Error while parsing `offset` parameter:", err)
+		offset = 0
+	}
+
 	log.Println("Client connected")
-	jsonData, err := retrieveMessages(db)
+	jsonData, err := retrieveMessages(db, limit, offset)
 	if err != nil {
 		log.Println("Error while retrieving messages from database:", err)
 		return
@@ -128,7 +154,8 @@ func main() {
 	db, _ = CreateDB("./meteora.db")
 
 	http.HandleFunc("/ws/send", handleSend)
-	http.HandleFunc("/ws/fetch", handleFetch)
+	// XXX: slash after "fetch" is needed
+	http.HandleFunc("/ws/fetch/", handleFetch)
 
 	port := ":8080"
 	log.Println("WebSocket server started on port", port)

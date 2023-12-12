@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"strconv"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -22,7 +23,8 @@ import (
 
 var messages []shared.Message
 var currentPage = 1
-const messagesPerPage = 10
+
+const MESSAGES_PER_PAGE = 5
 
 func parseResponse(response []byte) []shared.Message {
 	var m []shared.Message
@@ -62,13 +64,30 @@ func createMessage(text string, key ed25519.PrivateKey, pubkey ed25519.PublicKey
 	return &message
 }
 
+func updateMessageList(addr string, window fyne.Window, limit int, offset int) ([]byte, error) {
+	u := "/ws/fetch"
+	params := url.Values{}
 
+	params.Set("limit", strconv.Itoa(limit))
+	params.Set("offset", strconv.Itoa(offset))
 
-// messageList の update 関数を変更
-func updateMessageList() {
+	serverAddr := url.URL{Scheme: "ws", Host: addr, Path: u + "/?" + params.Encode()}
+	conn, _, err := websocket.DefaultDialer.Dial(serverAddr.String(), nil)
+	if err != nil {
+		dialog.ShowError(err, window)
+		return nil, err
+	}
+	defer conn.Close()
 
+	// Wait for a server response
+	_, response, err := conn.ReadMessage()
+	if err != nil {
+		dialog.ShowError(err, window)
+		return nil, err
+	}
+
+	return response, nil
 }
-
 
 func main() {
 	meteoraApp := app.NewWithID("meteora")
@@ -86,7 +105,6 @@ func main() {
 	messageEntry.SetPlaceHolder("Type your message here...")
 
 	// get values from preferences
-
 	loadPreferences(meteoraApp, []PreferencesPair{
 		{Entry: addressEntry, Key: "address"},
 		{Entry: privateKeyEntry, Key: "privateKey"},
@@ -121,6 +139,9 @@ func main() {
 		})
 
 	messageList.Resize(fyne.NewSize(700, 400))
+
+	// label for paging
+	currentPageLabel := widget.NewLabel(fmt.Sprintf("Page: %d", currentPage))
 
 	sendButton := widget.NewButton("Send", func() {
 		addr := addressEntry.Text
@@ -170,50 +191,57 @@ func main() {
 			return
 		}
 
-		messages = parseResponse(response)
+		// reset page count
+		currentPage = 1
+		currentPageLabel.SetText(fmt.Sprintf("Page: %d", currentPage))
 
+		messages = parseResponse(response)
 		messageList.Refresh()
 
 	})
 
 	reloadButton := widget.NewButton("Reload", func() {
-		addr := addressEntry.Text
-		serverAddr := url.URL{Scheme: "ws", Host: addr, Path: "/ws/fetch"}
-		conn, _, err := websocket.DefaultDialer.Dial(serverAddr.String(), nil)
-		if err != nil {
-			dialog.ShowError(err, myWindow)
-			return
-		}
-		defer conn.Close()
-
-		// Wait for a server response
-		_, response, err := conn.ReadMessage()
+		response, err := updateMessageList(addressEntry.Text, myWindow, MESSAGES_PER_PAGE, (currentPage-1)*MESSAGES_PER_PAGE)
 		if err != nil {
 			dialog.ShowError(err, myWindow)
 			return
 		}
 
 		messages = parseResponse(response)
-
 		messageList.Refresh()
 	})
 
 	// ページング用のナビゲーションボタンを追加
 	prevButton := widget.NewButton("Prev Page", func() {
-		if currentPage > 0 {
+		if currentPage > 1 {
 			currentPage--
-			updateMessageList()
+			response, err := updateMessageList(addressEntry.Text, myWindow, MESSAGES_PER_PAGE, (currentPage-1)*MESSAGES_PER_PAGE)
+			if err != nil {
+				dialog.ShowError(err, myWindow)
+				return
+			}
+			messages = parseResponse(response)
+			messageList.Refresh()
+
+			currentPageLabel.SetText(fmt.Sprintf("Page: %d", currentPage))
 		}
 	})
 
 	nextButton := widget.NewButton("Next Page", func() {
-		if (currentPage+1)*messagesPerPage < len(messages) {
-			currentPage++
-			updateMessageList()
+		// TODO: add an exit condition for paging
+		currentPage++
+		response, err := updateMessageList(addressEntry.Text, myWindow, MESSAGES_PER_PAGE, (currentPage-1)*MESSAGES_PER_PAGE)
+		if err != nil {
+			dialog.ShowError(err, myWindow)
+			return
 		}
+		messages = parseResponse(response)
+		messageList.Refresh()
+
+		currentPageLabel.SetText(fmt.Sprintf("Page: %d", currentPage))
 	})
 
-	buttonBox := container.NewHBox(sendButton, reloadButton, prevButton, nextButton)
+	buttonBox := container.NewHBox(sendButton, reloadButton, prevButton, currentPageLabel, nextButton)
 
 	top := container.NewVBox(
 		addressEntry,
