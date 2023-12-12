@@ -2,6 +2,26 @@
 
 Yet another social network
 
+## run
+### client
+```bash
+cd client
+go run .
+```
+
+### server
+```bash
+cd server
+go run .
+```
+
+#### using docker
+```bash
+cd server
+docker build --tag meteora-server:latest .
+docker compose up
+```
+
 ## generate keys
 ```bash
 $ openssl genpkey -algorithm ED25519 -out key.pem
