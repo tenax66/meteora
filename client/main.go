@@ -216,6 +216,7 @@ func main() {
 	prevButton := widget.NewButton("Prev Page", func() {
 		if currentPage > 1 {
 			currentPage--
+			// FIXME: duplicated code for calculating the offset
 			response, err := updateMessageList(addressEntry.Text, myWindow, MESSAGES_PER_PAGE, (currentPage-1)*MESSAGES_PER_PAGE)
 			if err != nil {
 				dialog.ShowError(err, myWindow)
