@@ -42,3 +42,6 @@ Messages are the only object type on the meteora network. One example is given b
     "sig":"f1a7b8bd5b1195d292ab5639c124cc9d7219c338bc46dfaf7f297e1d90f275d344138c3fea7546d36434e8ec7abcfaf30c0e1bf9ac34dd83f3938c8198c2a40f"
 }
 ```
+
+When the server receives a message, it verifies the message `sig` with the `pubkey`.
+The `pubkey` is an identity of a user in meteora.
