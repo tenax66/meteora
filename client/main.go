@@ -89,6 +89,7 @@ func updateMessageList(addr string, window fyne.Window, limit int, offset int) (
 	return response, nil
 }
 
+// An entry point for meteora client.
 func main() {
 	meteoraApp := app.NewWithID("meteora")
 	myWindow := meteoraApp.NewWindow("WebSocket Client")
