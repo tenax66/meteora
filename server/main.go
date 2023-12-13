@@ -38,6 +38,29 @@ func retrieveMessages(db *sql.DB, limit int, offset int) ([]byte, error) {
 	return jsonData, nil
 }
 
+func verifyMessage(message shared.Message) (bool, error) {
+	// verify the attached signature
+	ser, err := json.Marshal(message.Content)
+	if err != nil {
+		log.Println("Error while marshaling the content:", err)
+		return false, err
+	}
+
+	pubkey, err := hex.DecodeString(message.Pubkey)
+	if err != nil {
+		log.Println("Cannot decode a public key")
+		return false, err
+	}
+
+	sig, err := hex.DecodeString(message.Sig)
+	if err != nil {
+		log.Println("Cannot decode a signature")
+		return false, err
+	}
+
+	return ed25519.Verify(pubkey, ser, sig), nil
+}
+
 func handleSend(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -64,29 +87,13 @@ func handleSend(w http.ResponseWriter, r *http.Request) {
 		json.Unmarshal(p, &message)
 		log.Println("Received message:", message)
 
-		// verify the attached signature
-		ser, err := json.Marshal(message.Content)
-		if err != nil {
-			log.Println("Error while marshaling the content:", err)
-			break
-		}
-
-		pubkey, err := hex.DecodeString(message.Pubkey)
-		if err != nil {
-			log.Println("Cannot decode a public key")
-			break
-		}
-
-		sig, err := hex.DecodeString(message.Sig)
-		if err != nil {
-			log.Println("Cannot decode a signature")
-			break
-		}
-
-		if ed25519.Verify(pubkey, ser, sig) {
+		// verify the signature of the message
+		if t, err := verifyMessage(message); err != nil {
+			log.Println("Error while verifying message:", err)
+		} else if t {
 			log.Println("Signature verified")
 		} else {
-			log.Println("Signature verification failed")
+			log.Println("Signature does not verified:")
 			break
 		}
 
