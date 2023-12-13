@@ -22,6 +22,7 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+// retrieves messages from the database with givem limit and offset.
 func retrieveMessages(db *sql.DB, limit int, offset int) ([]byte, error) {
 	// TODO: configurable limit
 	messages, err := SelectMessages(db, limit, offset)
@@ -38,6 +39,7 @@ func retrieveMessages(db *sql.DB, limit int, offset int) ([]byte, error) {
 	return jsonData, nil
 }
 
+// verifies the signature of the given message and returns the result as a boolean value.
 func verifyMessage(message shared.Message) (bool, error) {
 	// verify the attached signature
 	ser, err := json.Marshal(message.Content)
